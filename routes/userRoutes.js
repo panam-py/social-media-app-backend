@@ -2,7 +2,6 @@ const express = require("express");
 const userController = require("../controllers/userController");
 const authController = require("../controllers/authController");
 
-
 const router = express.Router();
 
 // router.use(authController.checkAPIUser);
@@ -14,8 +13,6 @@ router.post("/login", authController.logIn);
 
 router.use(authController.protectRoutes);
 
-
-
 router.get("/me/friends/:ids", userController.getUsersBySlug);
 
 router
@@ -26,8 +23,7 @@ router
 router
   .route("/:id")
   .get(userController.getUser)
-  .delete(userController.deleteUser);
-// router.get("/check", authController.protectRoutes);
+  .delete(authController.restrict, userController.deleteUser);
 
 router
   .route("/friendrequest/:friendId")
@@ -45,7 +41,7 @@ router.patch("/report/:id", userController.report);
 router.patch("/unfriend/:id", userController.unFriend);
 
 router.delete(
-  "/delete",
+  "/me/delete",
 
   userController.deleteMeForever
 );

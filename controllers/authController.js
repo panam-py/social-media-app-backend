@@ -77,8 +77,7 @@ exports.checkAPIUser = catchAsyncError(async (req, res, next) => {
   }
 
   const apiUser = await APIUser.findOne({ authKey });
-  
-  
+
   if (!apiUser) {
     return next(new AppError("Invalid API key provided", 401));
   }
@@ -93,7 +92,7 @@ exports.signUp = catchAsyncError(async (req, res, next) => {
     password: req.body.password,
     confirmPassword: req.body.confirmPassword,
   };
-  
+
   const newUser = await User.create(data);
   createAndSendToken(res, "201", newUser);
 });
@@ -156,5 +155,17 @@ exports.protectRoutes = catchAsyncError(async (req, res, next) => {
   }
 
   req.user = user;
+  next();
+});
+
+exports.restrict = catchAsyncError(async (req, res, next) => {
+  const role = req.user.role;
+
+  if (!(role === 'admin')) {
+    return next(
+      new AppError("You are not authorized to perform this action!", 401)
+    );
+  }
+
   next();
 });

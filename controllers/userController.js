@@ -29,7 +29,7 @@ exports.getUser = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.params.id).populate({
     path: "posts",
   });
-  if (!user || req.user.active == false) {
+  if (!user || user.active === false) {
     return next(new AppError("No document found with that id!", 404));
   }
   user.countPosts(user.posts);
@@ -107,7 +107,7 @@ exports.deleteMeForever = catchAsyncError(async (req, res, next) => {
     return next(new AppError("User does not exist", 404));
   }
 
-  user.deleteOne();
+  await User.findByIdAndDelete(user.id)
   success(res, "204");
 });
 
@@ -217,41 +217,30 @@ exports.respondToFriendRequest = catchAsyncError(async (req, res, next) => {
   // const user = await User.findById(req.params.friendToAcceptId);
   let request, data;
   if (req.method === "DELETE") {
-    const user = await User.findById(req.params.friendToRespondTo);
+    requestToDelete = req.params.friendToRespondTo;
 
-    if (!user) {
-      return next(new AppError("User does not exist", 404));
-    }
+    friendRequestsRecieved = req.user.friendRequestsRecievedDetails;
+    newFriendRequestsRecieved = [];
 
-    const truthArray = [];
-
-    fromRequests = req.user.friendRequestsRecievedDetails;
-    // toRequests = user.friendRequestsSentDetails;
-
-    const newRequest = [];
-
-    fromRequests.map((el) => {
-      if (el.fromUser === req.params.friendToRespondTo) {
-        truthArray.push(true);
+    truthArr = [];
+    console.log("HERE");
+    friendRequestsRecieved.map((el) => {
+      if (el.fromUser === requestToDelete) {
+        truthArr.push(true);
       } else {
-        truthArray.push(false);
+        truthArr.push(false);
+        newFriendRequestsRecieved.push(el);
       }
     });
+    console.log("HERE!");
 
-    if (!truthArray.includes(true)) {
-      return next(
-        new AppError("There is no request from the user provided", 401)
-      );
+    console.log("HERE!!");
+    if (!truthArr.includes(true)) {
+      return next(new AppError("There is no request from that user!", 400));
     }
-
-    request.map((el) => {
-      if (!(el.fromUser === req.params.friendToRespondTo)) {
-        newRequest.push(el);
-      }
-    });
 
     await User.findByIdAndUpdate(req.user.id, {
-      friendRequestsDetails: newRequest,
+      friendRequestsRecievedDetails: newFriendRequestsRecieved,
     });
 
     res.status(200).json({
