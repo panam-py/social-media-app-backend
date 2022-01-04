@@ -11,20 +11,70 @@ const updateOptions = ["commentText"];
 
 exports.getAllComments = common.getAll(Comment, comments);
 
-exports.createComment = common.createOne(Comment, newComment, createOptions);
+exports.createComment = catchAsyncError(async (req, res, next) => {
+  const post = req.body.post;
+  const user = req.user;
+  const commentText = req.body.commentText;
 
-exports.updateComment = common.updateOne(
-  Comment,
-  updatedComment,
-  updateOptions
-);
+  if (!post || !user || !commentText) {
+    return next(
+      new AppError(
+        "Incomplete information provided, please provide post and commentText",
+        400
+      )
+    );
+  }
+
+  savedPost = await Post.findById(post);
+
+  if (!savedPost) {
+    return next(new AppError("No post found with that id!", 404));
+  }
+
+  data = {
+    post: post,
+    user: user,
+    commentText: commentText,
+  };
+
+  await Comment.create(data);
+
+  res.status(200).json({
+    status: "success",
+    message: "Comment successfully created!",
+    data: { data },
+  });
+});
+
+exports.updateComment = catchAsyncError(async (req, res, next) => {
+  const comment = await Comment.findById(req.params.id);
+
+  if (!comment) {
+    return next(new AppError("No comment found with that id!", 404));
+  }
+
+  if (!(req.user.id == comment.user)) {
+    return next(new AppError("You are not authorized to perform this action!"));
+  }
+
+  commentText = req.body.commentText;
+
+  await Comment.findByIdAndUpdate(req.params.id, {
+    commentText,
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Comment updated successfully",
+  });
+});
 
 exports.deleteComment = common.deleteOne(Comment, comment);
 
 exports.getCommment = catchAsyncError(async (req, res, next) => {
   comment = await Comment.findById(req.params.id);
   if (!comment) {
-    new next(AppError("No document found with that id!", 404));
+    next(new AppError("No document found with that id!", 404));
   }
   success(res, "200", comment);
 });

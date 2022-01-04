@@ -4,13 +4,15 @@ const authController = require("../controllers/authController");
 // const commentController = require("../controllers/commentController");
 const router = express.Router();
 
-router.use(authController.checkAPIUser);
+// router.use(authController.checkAPIUser);
 router.use(authController.protectRoutes);
 
 router
   .route("/")
-  .get(postController.getAllUsersFriendsPosts)
+  .get(postController.getAllPosts)
   .post(postController.createPost);
+
+router.get("/friends", postController.getAllUsersFriendsPosts);
 
 router
   .route("/:id")

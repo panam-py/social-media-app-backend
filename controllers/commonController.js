@@ -28,7 +28,7 @@ exports.createOne = (Model, doc, options) =>
     options.map((el) => {
       if (el === "user") {
         data[el] = req.user.id;
-      } else {
+      } else if (el === 'post') {
         data[el] = req.body[el];
       }
     });
@@ -46,8 +46,8 @@ exports.updateOne = (Model, doc, options) =>
       return next(new AppError("No document found with that id!", 404));
     }
 
-    if (req.user.id === doc.user) {
-      doc.updateOne(data, {
+    if (req.user.id == doc.user) {
+      newDoc = doc.updateOne(data, {
         new: true,
         runValidators: true,
       });
@@ -62,7 +62,7 @@ exports.updateOne = (Model, doc, options) =>
     success(res, "200", doc);
   });
 
-exports.deleteOne = (Model, doc) =>
+exports.deleteOne = (Model, newDoc) =>
   catchAsyncError(async (req, res, next) => {
     doc = await Model.findById(req.params.id);
 
@@ -70,7 +70,7 @@ exports.deleteOne = (Model, doc) =>
       return next(new AppError("No document found with that id!", 404));
     }
 
-    if (req.user.id === doc.user || req.user.role === "admin") {
+    if (req.user.id == doc.user || req.user.role === "admin") {
       doc.deleteOne();
       return success(res, "204", doc);
     } else {
